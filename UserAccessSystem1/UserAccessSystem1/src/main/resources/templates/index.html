@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management Dashboard</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+    }
+
+    header {
+      background-color: #6c63ff;
+      color: white;
+      text-align: center;
+      padding: 1rem 0;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      margin: 0;
+    }
+
+    main {
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 1rem;
+    }
+
+    .button {
+      background-color: #6c63ff;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .button:hover {
+      background-color: #5754d1;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+      text-align: left;
+    }
+
+    table th {
+      background-color: #6c63ff;
+      color: white;
+    }
+
+    .delete-button {
+      background-color: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .delete-button:hover {
+      background-color: #d15555;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>User Management Dashboard</h1>
+  </header>
+
+  <main>
+    <div class="container">
+      <h2>Actions</h2>
+      <div>
+        <button class="button" id="viewUsersButton">View All Users</button>
+        <button class="button" id="addUserButton">Add User</button>
+      </div>
+
+      <div id="userForm" style="margin-top: 2rem; display: none;">
+        <h3>Add a New User</h3>
+        <div class="form-group">
+          <label for="name">Name:</label>
+          <input type="text" id="name" placeholder="Enter name">
+        </div>
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input type="email" id="email" placeholder="Enter email">
+        </div>
+        <div class="form-group">
+          <label for="role">Role:</label>
+          <select id="role">
+            <option value="User">User</option>
+            <option value="Administrator">Administrator</option>
+            <option value="DataScientist">Data Scientist</option>
+          </select>
+        </div>
+        <button class="button" id="submitUserButton">Submit</button>
+      </div>
+
+      <div id="userTable" style="margin-top: 2rem; display: none;">
+        <h3>All Users</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2025 User Access System
+  </footer>
+
+  <script>
+    const viewUsersButton = document.getElementById('viewUsersButton');
+    const addUserButton = document.getElementById('addUserButton');
+    const userForm = document.getElementById('userForm');
+    const userTable = document.getElementById('userTable');
+    const userTableBody = document.getElementById('userTableBody');
+    const submitUserButton = document.getElementById('submitUserButton');
+
+    const apiUrl = "http://localhost:8082/api";
+
+    viewUsersButton.addEventListener('click', async () => {
+      userTable.style.display = 'block';
+      userForm.style.display = 'none';
+      const response = await fetch(`${apiUrl}/people`);
+      const users = await response.json();
+      userTableBody.innerHTML = users.map(user => `
+        <tr>
+          <td>${user.id}</td>
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>${user.role || 'N/A'}</td>
+          <td><button class="delete-button" onclick="deleteUser(${user.id})">Delete</button></td>
+        </tr>
+      `).join('');
+    });
+
+    addUserButton.addEventListener('click', () => {
+      userForm.style.display = 'block';
+      userTable.style.display = 'none';
+    });
+
+    submitUserButton.addEventListener('click', async () => {
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const role = document.getElementById('role').value;
+
+      let endpoint = '/addPerson';
+      if (role === 'Administrator') {
+        endpoint = '/addAdmin';
+      }
+
+      const response = await fetch(`${apiUrl}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email }),
+      });
+
+      if (response.ok) {
+        alert(`${role} added successfully!`);
+        document.getElementById('name').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('role').value = 'User';
+      } else {
+        alert('Failed to add user!');
+      }
+    });
+
+    async function deleteUser(id) {
+      const response = await fetch(`${apiUrl}/deletePerson/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        alert(`User with ID ${id} deleted successfully.`);
+        viewUsersButton.click();
+      } else {
+        alert(`Failed to delete user with ID ${id}.`);
+      }
+    }
+  </script>
+</body>
+</html>
+
